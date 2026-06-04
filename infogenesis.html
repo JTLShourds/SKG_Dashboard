@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Info Genesis — Network Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0e0f11;
+    --surface:   #16181c;
+    --border:    #2a2d33;
+    --text:      #e8eaf0;
+    --muted:     #5a5f6e;
+    --green:     #2dcc70;
+    --green-dim: #1a4a2e;
+    --red:       #e84040;
+    --red-dim:   #4a1a1a;
+    --accent:    #a84ff7;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .banner {
+    text-align: center;
+    padding: 1.75rem 1.5rem;
+    margin: -2rem -2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 22px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--surface);
+  }
+
+  .title {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+  }
+
+  .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .meta span { color: var(--text); }
+
+  .refresh-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 16px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: border-color 0.15s, color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .refresh-btn svg { width: 14px; height: 14px; }
+  .refresh-btn.spinning #refresh-icon { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+
+  .stat {
+    background: var(--surface);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .stat-value.green { color: var(--green); }
+  .stat-value.red   { color: var(--red); }
+
+  .devices {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .device {
+    background: var(--surface);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: background 0.2s;
+  }
+
+  .device-icon {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--muted);
+  }
+
+  .device-icon svg { width: 20px; height: 20px; }
+
+  .device-info { flex: 1; min-width: 0; }
+
+  .device-name {
+    font-weight: 500;
+    font-size: 15px;
+    margin-bottom: 3px;
+  }
+
+  .device-ip {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .device-status {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-online  { color: var(--green); }
+  .status-offline { color: var(--red); }
+  .status-pending { color: var(--muted); }
+
+  .dot-online  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-offline { background: var(--red); }
+  .dot-pending { background: var(--muted); }
+
+  .device.online  { border-left: 2px solid var(--green); }
+  .device.offline { border-left: 2px solid var(--red); animation: flash-red 2s ease-in-out infinite; }
+  .device.pending { border-left: 2px solid transparent; }
+
+  @keyframes flash-red {
+    0%, 100% { background: var(--surface); }
+    50%       { background: var(--red-dim); }
+  }
+
+
+  .dot-warning  { background: #f0a500; box-shadow: 0 0 6px #f0a500; }
+  .status-warning { color: #f0a500; }
+  .device.warning { border-left: 2px solid #f0a500; animation: flash-warning 2s ease-in-out infinite; }
+
+  @keyframes flash-warning {
+    0%, 100% { background: var(--surface); }
+    50%       { background: #3a2a00; }
+  }
+  footer {
+    margin-top: 1.5rem;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+    letter-spacing: 0.08em;
+  }
+
+  @media (max-width: 640px) {
+    .stats   { grid-template-columns: repeat(2, 1fr); }
+    .devices { grid-template-columns: 1fr; }
+    body { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Info Genesis Servers</div>
+
+<header>
+  <div>
+    <p class="title">System / Network</p>
+    <h1>Network Monitor</h1>
+    <p class="meta">Last checked: <span id="last-checked">—</span> &nbsp;·&nbsp; Auto-refresh: 30s</p>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <a href="/" class="refresh-btn" style="text-decoration:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      Home
+    </a>
+    <button class="refresh-btn" id="refresh-btn" onclick="triggerRefresh()">
+      <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat">
+    <p class="stat-label">Total devices</p>
+    <p class="stat-value" id="s-total">—</p>
+  </div>
+  <div class="stat">
+    <p class="stat-label">Online</p>
+    <p class="stat-value green" id="s-online">—</p>
+  </div>
+  <div class="stat">
+    <p class="stat-label">Offline</p>
+    <p class="stat-value red" id="s-offline">—</p>
+  </div>
+  <div class="stat">
+    <p class="stat-label">Uptime</p>
+    <p class="stat-value" id="s-uptime">—</p>
+  </div>
+</div>
+
+<div class="devices" id="device-grid"></div>
+
+<footer>INFOGENESIS SERVERS &nbsp;·&nbsp; LOCALHOST:5000</footer>
+
+<script>
+const ICONS = {
+  default: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="1"/><path d="M8 21h8M12 17v4"/></svg>`,
+  Printer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3h12v6M6 14h12v8H6z"/></svg>`,
+  Router:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="20" height="8" rx="1"/><path d="M6 13h.01M10 13h.01M17 9V5M20 9V5"/></svg>`,
+};
+
+function getIcon(name) {
+  if (ICONS[name]) return ICONS[name];
+  return ICONS.default;
+}
+
+function render(data) {
+  const devs = data.devices;
+  const total   = devs.length;
+  const online  = devs.filter(d => d.status === "online" || d.status === "warning").length;
+  const offline = devs.filter(d => d.status === "offline").length;
+  const checked = devs.every(d => d.status !== "pending");
+
+  document.getElementById("s-total").textContent   = total;
+  document.getElementById("s-online").textContent  = checked ? online  : "—";
+  document.getElementById("s-offline").textContent = checked ? offline : "—";
+  document.getElementById("s-uptime").textContent  = checked ? Math.round(online / total * 100) + "%" : "—";
+  document.getElementById("last-checked").textContent = data.last_checked || "—";
+
+  const grid = document.getElementById("device-grid");
+  grid.innerHTML = devs.map(d => {
+    const state = d.status || "pending";
+    const label = state === "pending" ? "Checking…"
+                : state === "online"  ? "Online"
+                : state === "warning" ? "Warning"
+                :                       "Offline";
+    return `
+      <div class="device ${state}">
+        <div class="device-icon">${getIcon(d.name)}</div>
+        <div class="device-info">
+          <p class="device-name">${d.name}</p>
+          <p class="device-ip">${d.ip}</p>
+        </div>
+        <div class="device-status status-${state}">
+          <span class="dot dot-${state}"></span>
+          ${label}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+async function fetchStatus() {
+  try {
+    const res  = await fetch("/api/infogenesis/status");
+    const data = await res.json();
+    render(data);
+  } catch(e) {
+    console.error("Failed to fetch status:", e);
+  }
+}
+
+async function triggerRefresh() {
+  const btn = document.getElementById("refresh-btn");
+  btn.disabled = true;
+  btn.classList.add("spinning");
+  try {
+    await fetch("/api/infogenesis/refresh", { method: "POST" });
+    await new Promise(r => setTimeout(r, 800));
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      const res  = await fetch("/api/infogenesis/status");
+      const data = await res.json();
+      render(data);
+      if (!data.checking || attempts > 20) {
+        clearInterval(poll);
+        btn.disabled = false;
+        btn.classList.remove("spinning");
+      }
+    }, 500);
+  } catch(e) {
+    btn.disabled = false;
+    btn.classList.remove("spinning");
+  }
+}
+
+fetchStatus();
+setInterval(fetchStatus, 5000);
+</script>
+</body>
+</html>

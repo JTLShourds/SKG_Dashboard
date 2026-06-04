@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S&K Gaming - Server Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0e0f11;
+    --surface:   #16181c;
+    --border:    #2a2d33;
+    --text:      #e8eaf0;
+    --muted:     #5a5f6e;
+    --green:     #2dcc70;
+    --green-dim: #1a4a2e;
+    --red:       #e84040;
+    --red-dim:   #4a1a1a;
+    --accent-kw: #4f8ef7;
+    --accent-fb: #f7814f;
+    --accent-ig: #a84ff7;
+    --accent-kio: #f982fa;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .banner {
+    text-align: center;
+    padding: 1.75rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 22px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  main {
+    flex: 1;
+    padding: 3rem 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .card {
+    background: var(--surface);
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .card:hover { background: #1e2026; }
+  .card:hover .card-arrow { opacity: 1; transform: translate(2px, -2px); }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .card-icon {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-icon svg { width: 22px; height: 22px; }
+
+  .card-arrow {
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+
+  .card-arrow svg { width: 16px; height: 16px; }
+
+  .card-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .card-stats {
+    display: flex;
+    gap: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-stat-value {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .card-stat-label { font-size: 11px; color: var(--muted); }
+
+  .green { color: var(--green); }
+  .red   { color: var(--red); }
+
+  .status-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+
+  .status-bar-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .last-checked {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  @keyframes flash-yellow {
+    0%, 100% { background: var(--surface); }
+    50%       { background: #6a5a18; }
+  }
+
+  @keyframes flash-orange {
+    0%, 100% { background: var(--surface); }
+    50%       { background: #6a3418; }
+  }
+
+  @keyframes flash-red {
+    0%, 100% { background: var(--surface); }
+    50%       { background: #6a1818; }
+  }
+
+  .card.alert-yellow { animation: flash-yellow 2s ease-in-out infinite; }
+  .card.alert-orange { animation: flash-orange 2s ease-in-out infinite; }
+  .card.alert-red    { animation: flash-red    2s ease-in-out infinite; }
+
+  footer {
+    padding: 1.5rem 2rem;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+    letter-spacing: 0.08em;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Server Monitor</div>
+
+<main>
+  <p class="section-label">Dashboards</p>
+  <div class="grid">
+
+    <a class="card" href="/dashboard" id="card-kw">
+      <div class="card-top">
+        <div class="card-icon" style="color: var(--accent-kw);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="1"/><path d="M8 21h8M12 17v4"/>
+          </svg>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17L17 7M7 7h10v10"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <p class="card-name">Network / Devices</p>
+        <p class="card-title" style="color: var(--accent-kw);">Keywatcher Servers</p>
+      </div>
+      <div class="card-stats">
+        <div>
+          <p class="card-stat-value green" id="kw-online">—</p>
+          <p class="card-stat-label">Online</p>
+        </div>
+        <div>
+          <p class="card-stat-value red" id="kw-offline">—</p>
+          <p class="card-stat-label">Offline</p>
+        </div>
+        <div>
+          <p class="card-stat-value" id="kw-total">—</p>
+          <p class="card-stat-label">Total</p>
+        </div>
+      </div>
+      <div>
+        <div class="status-bar"><div class="status-bar-fill" id="kw-bar" style="width:0%"></div></div>
+        <p class="last-checked" id="kw-checked">Checking…</p>
+      </div>
+    </a>
+
+    <a class="card" href="/fabitrack" id="card-fab">
+      <div class="card-top">
+        <div class="card-icon" style="color: var(--accent-fb);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="1"/><path d="M8 21h8M12 17v4"/>
+          </svg>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17L17 7M7 7h10v10"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <p class="card-name">Network / Devices</p>
+        <p class="card-title" style="color: var(--accent-fb);">Fabitrack Servers</p>
+      </div>
+      <div class="card-stats">
+        <div>
+          <p class="card-stat-value green" id="fab-online">—</p>
+          <p class="card-stat-label">Online</p>
+        </div>
+        <div>
+          <p class="card-stat-value red" id="fab-offline">—</p>
+          <p class="card-stat-label">Offline</p>
+        </div>
+        <div>
+          <p class="card-stat-value" id="fab-total">—</p>
+          <p class="card-stat-label">Total</p>
+        </div>
+      </div>
+      <div>
+        <div class="status-bar"><div class="status-bar-fill" id="fab-bar" style="width:0%"></div></div>
+        <p class="last-checked" id="fab-checked">Checking…</p>
+      </div>
+    </a>
+
+    <a class="card" href="/infogenesis" id="card-ig">
+      <div class="card-top">
+        <div class="card-icon" style="color: var(--accent-ig);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="1"/><path d="M8 21h8M12 17v4"/>
+          </svg>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17L17 7M7 7h10v10"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <p class="card-name">Network / Devices</p>
+        <p class="card-title" style="color: var(--accent-ig);">Info Genesis Servers</p>
+      </div>
+      <div class="card-stats">
+        <div>
+          <p class="card-stat-value green" id="ig-online">—</p>
+          <p class="card-stat-label">Online</p>
+        </div>
+        <div>
+          <p class="card-stat-value red" id="ig-offline">—</p>
+          <p class="card-stat-label">Offline</p>
+        </div>
+        <div>
+          <p class="card-stat-value" id="ig-total">—</p>
+          <p class="card-stat-label">Total</p>
+        </div>
+      </div>
+      <div>
+        <div class="status-bar"><div class="status-bar-fill" id="ig-bar" style="width:0%"></div></div>
+        <p class="last-checked" id="ig-checked">Checking…</p>
+      </div>
+    </a>
+
+    <a class="card" href="/kiosks" id="card-kio">
+      <div class="card-top">
+        <div class="card-icon" style="color: var(--accent-kio);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="1"/><path d="M8 21h8M12 17v4"/>
+          </svg>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17L17 7M7 7h10v10"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <p class="card-name">Network / Devices</p>
+        <p class="card-title" style="color: var(--accent-kio);">Fabi Kiosks</p>
+      </div>
+      <div class="card-stats">
+        <div>
+          <p class="card-stat-value green" id="kio-online">—</p>
+          <p class="card-stat-label">Online</p>
+        </div>
+        <div>
+          <p class="card-stat-value red" id="kio-offline">—</p>
+          <p class="card-stat-label">Offline</p>
+        </div>
+        <div>
+          <p class="card-stat-value" id="kio-total">—</p>
+          <p class="card-stat-label">Total</p>
+        </div>
+      </div>
+      <div>
+        <div class="status-bar"><div class="status-bar-fill" id="kio-bar" style="width:0%"></div></div>
+        <p class="last-checked" id="kio-checked">Checking…</p>
+      </div>
+    </a>
+
+
+
+  </div>
+</main>
+
+<footer>NETWORK MONITOR &nbsp;·&nbsp; SKLT09:5000</footer>
+
+<script>
+async function fetchAll() {
+  try {
+    const [kwRes, fabRes, igRes, kioRes] = await Promise.all([
+      fetch("/api/status"),
+      fetch("/api/fabitrack/status"),
+      fetch("/api/infogenesis/status"),
+      fetch("/api/kiosks/status"),
+    ]);
+    const kw  = await kwRes.json();
+    const fab = await fabRes.json();
+    const ig  = await igRes.json();
+    const kio = await kioRes.json();
+    updateCard(kw,  "kw");
+    updateCard(fab, "fab");
+    updateCard(ig,  "ig");
+    updateCard(kio, "kio")
+  } catch(e) {
+    console.error("Failed to fetch status:", e);
+  }
+}
+
+function updateCard(data, prefix) {
+  const devs    = data.devices;
+  const total   = devs.length;
+  const online  = devs.filter(d => d.status === "online" || d.status === "warning").length;
+  const offline = devs.filter(d => d.status === "offline").length;
+  const checked = devs.every(d => d.status !== "pending");
+  const pct     = checked ? Math.round(online / total * 100) : 0;
+  const offPct  = total > 0 ? offline / total : 0;
+
+  document.getElementById(prefix + "-online").textContent  = checked ? online  : "—";
+  document.getElementById(prefix + "-offline").textContent = checked ? offline : "—";
+  document.getElementById(prefix + "-total").textContent   = total;
+  document.getElementById(prefix + "-bar").style.width     = pct + "%";
+  document.getElementById(prefix + "-checked").textContent =
+    data.last_checked ? "Last checked: " + data.last_checked : "Checking…";
+
+  const card = document.getElementById("card-" + prefix);
+  if (card) {
+    card.classList.remove("alert-yellow", "alert-orange", "alert-red");
+    if (checked && offline > 0) {
+      if (offPct <= 0.33)       card.classList.add("alert-yellow");
+      else if (offPct <= 0.66)  card.classList.add("alert-orange");
+      else                      card.classList.add("alert-red");
+    }
+  }
+}
+
+fetchAll();
+setInterval(fetchAll, 5000);
+</script>
+</body>
+</html>
