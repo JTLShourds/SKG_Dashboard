@@ -22,15 +22,15 @@ FABITRACK_DEVICES = [
     {"name": "BA App Server", "ip": "10.3.0.6"},
     {"name": "GWP App Server", "ip": "10.20.1.41"},
     {"name": "400 App Server", "ip": "192.168.75.48"},
-    #{"name": "400 Jackpot Server", "ip": "192.168.75.49"},
-    #{"name": "KTN Jackpot Server", "ip": "192.168.75.18"},
-    #{"name": "GWP Jackpot Server", "ip": "10.20.1.42"},
-    #{"name": "BA Jackpot Server", "ip": "10.3.0.7"},
+    # {"name": "400 Jackpot Server", "ip": "192.168.75.49"},
+    # {"name": "KTN Jackpot Server", "ip": "192.168.75.18"},
+    # {"name": "GWP Jackpot Server", "ip": "10.20.1.42"},
+    # {"name": "BA Jackpot Server", "ip": "10.3.0.7"},
 ]
 # ─── Info Genesis devices ────────────────────────────────────────────────────
 INFOGENESIS_DEVICES = [
     {"name": "BA Print Server", "ip": "10.3.2.6"},
-    {"name": "KTN/GWP Interface & Print Server", "ip": "192.168.75.45"},
+    {"name": "KTN/GWP/BA Interface", "ip": "192.168.75.45"},
     {"name": "400 Interface Server", "ip": "192.168.75.11"},
     {"name": "400 App / DB Server", "ip": "192.168.75.7"},
 ]
@@ -43,12 +43,29 @@ FABIKIOSK_DEVICES = [
     {"name": "GWP Kiosk 2", "ip": "10.20.3.251"},
 ]
 
+# ─── Temp devices ────────────────────────────────────────────────────
+TEMP_DEVICES = [
+    {"name": "Placeholder 1", "ip": "8.8.8.8"},
+    {"name": "Placeholder 2", "ip": "8.8.8.8"},
+    {"name": "Placeholder 3", "ip": "8.8.8.8"},
+    {"name": "Placeholder 4", "ip": "8.8.8.8"},
+]
+
+# ─── Temp 2 devices ────────────────────────────────────────────────────
+TEMP2_DEVICES = [
+    {"name": "Placeholder 1", "ip": "8.8.8.8"},
+    {"name": "Placeholder 2", "ip": "8.8.8.8"},
+    {"name": "Placeholder 3", "ip": "8.8.8.8"},
+    {"name": "Placeholder 4", "ip": "8.8.8.8"},
+]
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 REFRESH_INTERVAL = 30  # seconds between auto-pings
 WARNING_WINDOW = 300  # 5 minutes in seconds
-WARNING_THRESHOLD = 3  # failed pings in window to trigger warning
-OFFLINE_CONSECUTIVE = 2  # consecutive failures to mark offline
+WARNING_THRESHOLD = 8  # failed pings in window to trigger warning
+OFFLINE_CONSECUTIVE = 5  # consecutive failures to mark offline
 
 
 def make_device_entry(d):
@@ -56,6 +73,7 @@ def make_device_entry(d):
         "name": d["name"],
         "ip": d["ip"],
         "online": None,
+        "offline_since": None,
         "status": "pending",
         "consecutive": 0,
         "history": deque(),
@@ -66,6 +84,7 @@ def make_device_entry(d):
             "name": d["cabinet"]["name"],
             "ip": d["cabinet"]["ip"],
             "online": None,
+            "offline_since": None,
             "status": "pending",
             "consecutive": 0,
             "history": deque(),
@@ -85,6 +104,8 @@ kw_cache = make_cache(KEYWATCHER_DEVICES)
 fab_cache = make_cache(FABITRACK_DEVICES)
 ig_cache = make_cache(INFOGENESIS_DEVICES)
 kio_cache = make_cache(FABIKIOSK_DEVICES)
+temp_cache = make_cache(TEMP_DEVICES)
+temp2_cache = make_cache(TEMP2_DEVICES)
 
 
 def ping(host):
@@ -96,7 +117,10 @@ def ping(host):
     return result.returncode == 0
 
 
+
+
 def update_device_status(device, success):
+    old_status = device["status"]
     now = datetime.now()
     cutoff = now - timedelta(seconds=WARNING_WINDOW)
 
@@ -109,19 +133,38 @@ def update_device_status(device, success):
 
     # Update consecutive fail counter
     if success:
+
+        if old_status == "offline":
+            device["offline_since"] = None
+
         device["consecutive"] = 0
     else:
         device["consecutive"] += 1
+
+    if success and old_status == "offline":
+        with open("offline_log.txt", "a") as logfile:
+            logfile.write(
+                f"{datetime.now():%Y-%m-%d %H:%M:%S} | "
+                f"{device['name']} - "
+                f"{device['ip']} is ONLINE\n"
+            )
 
     # Count failures in the rolling window
     recent_failures = sum(1 for _, ok in device["history"] if not ok)
 
     # Determine status
     if device["consecutive"] >= OFFLINE_CONSECUTIVE:
+
+        if old_status != "offline":
+                device["offline_since"] = datetime.now()
+
         device["online"] = False
         device["status"] = "offline"
-        #with open("offline_log.txt", "a") as logfile:
-            #logfile.write(f"{datetime.now():%Y-%m-%d %H:%M:%S} | {device['name']} - {device['ip']} is offline\n\n")
+
+        if old_status != "offline":
+            with open("offline_log.txt", "a") as logfile:
+                logfile.write(f"{datetime.now():%Y-%m-%d %H:%M:%S} | {device['name']} - {device['ip']} is OFFLINE\n")
+
     elif recent_failures > WARNING_THRESHOLD:
         device["online"] = True  # reachable right now but unstable
         device["status"] = "warning"
@@ -157,6 +200,11 @@ def serialize_device(d):
         "ip": d["ip"],
         "online": d["online"],
         "status": d["status"],
+        "offline_since": (
+            d["offline_since"].isoformat()
+            if d["offline_since"]
+            else None
+        ),
         "cabinet": None,
     }
     if d["cabinet"] is not None:
@@ -185,6 +233,8 @@ def auto_refresh():
         threading.Thread(target=run_pings, args=(fab_cache, FABITRACK_DEVICES)).start()
         threading.Thread(target=run_pings, args=(ig_cache, INFOGENESIS_DEVICES)).start()
         threading.Thread(target=run_pings, args=(kio_cache, FABIKIOSK_DEVICES)).start()
+        threading.Thread(target=run_pings, args=(temp_cache, TEMP_DEVICES)).start()
+        threading.Thread(target=run_pings, args=(temp2_cache, TEMP2_DEVICES)).start()
         time.sleep(REFRESH_INTERVAL)
 
 
@@ -212,6 +262,14 @@ def infogenesis():
 @app.route("/kiosks")
 def kiosks():
     return send_from_directory(os.path.dirname(__file__), "kiosks.html")
+
+@app.route("/temp")
+def temp():
+    return send_from_directory(os.path.dirname(__file__), "temp.html")
+
+@app.route("/temp2")
+def temp2():
+    return send_from_directory(os.path.dirname(__file__), "temp2.html")
 
 
 @app.route("/api/status")
@@ -252,7 +310,25 @@ def kio_status():
 
 @app.route("/api/kiosks/refresh", methods=["POST"])
 def kio_refresh():
-    threading.Thread(target=run_pings, args=(kio_cache, FABITRACK_DEVICES)).start()
+    threading.Thread(target=run_pings, args=(kio_cache, FABIKIOSK_DEVICES)).start()
+    return jsonify({"ok": True})
+
+@app.route("/api/temp/status")
+def temp_status():
+    return jsonify(serialize_cache(temp_cache))
+
+@app.route("/api/temp/refresh", methods=["POST"])
+def temp_refresh():
+    threading.Thread(target=run_pings, args=(temp_cache, TEMP_DEVICES)).start()
+    return jsonify({"ok": True})
+
+@app.route("/api/temp2/status")
+def temp2_status():
+    return jsonify(serialize_cache(temp2_cache))
+
+@app.route("/api/temp2/refresh", methods=["POST"])
+def temp2_refresh():
+    threading.Thread(target=run_pings, args=(temp2_cache, TEMP2_DEVICES)).start()
     return jsonify({"ok": True})
 
 

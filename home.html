@@ -23,6 +23,8 @@
     --accent-fb: #f7814f;
     --accent-ig: #a84ff7;
     --accent-kio: #f982fa;
+    --accent-temp: #ffffff;
+    --accent-temp2: #ffffff;
     --mono:      'IBM Plex Mono', monospace;
     --sans:      'IBM Plex Sans', sans-serif;
   }
@@ -42,7 +44,7 @@
     padding: 1.75rem 1.5rem;
     border-bottom: 1px solid var(--border);
     font-family: var(--mono);
-    font-size: 22px;
+    font-size: 35px;
     letter-spacing: 0.25em;
     text-transform: uppercase;
     color: var(--text);
@@ -86,6 +88,8 @@
     transition: background 0.15s;
   }
 
+  
+
   .card:hover { background: #1e2026; }
   .card:hover .card-arrow { opacity: 1; transform: translate(2px, -2px); }
 
@@ -124,7 +128,7 @@
   }
 
   .card-title {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 500;
     letter-spacing: -0.01em;
   }
@@ -166,7 +170,7 @@
 
   .last-checked {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 12px;
     color: var(--muted);
     margin-top: 6px;
   }
@@ -243,6 +247,7 @@
       <div>
         <div class="status-bar"><div class="status-bar-fill" id="kw-bar" style="width:0%"></div></div>
         <p class="last-checked" id="kw-checked">Checking…</p>
+          <p class="last-checked" id="kw-outage"></p>
       </div>
     </a>
 
@@ -280,6 +285,7 @@
       <div>
         <div class="status-bar"><div class="status-bar-fill" id="fab-bar" style="width:0%"></div></div>
         <p class="last-checked" id="fab-checked">Checking…</p>
+          <p class="last-checked" id="fab-outage"></p>
       </div>
     </a>
 
@@ -317,6 +323,7 @@
       <div>
         <div class="status-bar"><div class="status-bar-fill" id="ig-bar" style="width:0%"></div></div>
         <p class="last-checked" id="ig-checked">Checking…</p>
+          <p class="last-checked" id="ig-outage"></p>
       </div>
     </a>
 
@@ -354,10 +361,85 @@
       <div>
         <div class="status-bar"><div class="status-bar-fill" id="kio-bar" style="width:0%"></div></div>
         <p class="last-checked" id="kio-checked">Checking…</p>
+          <p class="last-checked" id="kio-outage"></p>
       </div>
     </a>
 
+    <a class="card" href="/temp" id="card-temp">
+      <div class="card-top">
+        <div class="card-icon" style="color: var(--accent-temp);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="1"/><path d="M8 21h8M12 17v4"/>
+          </svg>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17L17 7M7 7h10v10"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <p class="card-name">Network / Devices</p>
+        <p class="card-title" style="color: var(--accent-temp);">Temp</p>
+      </div>
+      <div class="card-stats">
+        <div>
+          <p class="card-stat-value green" id="temp-online">—</p>
+          <p class="card-stat-label">Online</p>
+        </div>
+        <div>
+          <p class="card-stat-value red" id="temp-offline">—</p>
+          <p class="card-stat-label">Offline</p>
+        </div>
+        <div>
+          <p class="card-stat-value" id="temp-total">—</p>
+          <p class="card-stat-label">Total</p>
+        </div>
+      </div>
+      <div>
+        <div class="status-bar"><div class="status-bar-fill" id="temp-bar" style="width:0%"></div></div>
+        <p class="last-checked" id="temp-checked">Checking…</p>
+          <p class="last-checked" id="temp-outage"></p>
+      </div>
+    </a>
 
+    <a class="card" href="/temp2" id="card-temp2">
+      <div class="card-top">
+        <div class="card-icon" style="color: var(--accent-temp);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="1"/><path d="M8 21h8M12 17v4"/>
+          </svg>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17L17 7M7 7h10v10"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <p class="card-name">Network / Devices</p>
+        <p class="card-title" style="color: var(--accent-temp);">Temp 2</p>
+      </div>
+      <div class="card-stats">
+        <div>
+          <p class="card-stat-value green" id="temp2-online">—</p>
+          <p class="card-stat-label">Online</p>
+        </div>
+        <div>
+          <p class="card-stat-value red" id="temp2-offline">—</p>
+          <p class="card-stat-label">Offline</p>
+        </div>
+        <div>
+          <p class="card-stat-value" id="temp2-total">—</p>
+          <p class="card-stat-label">Total</p>
+        </div>
+      </div>
+      <div>
+        <div class="status-bar"><div class="status-bar-fill" id="temp2-bar" style="width:0%"></div></div>
+        <p class="last-checked" id="temp2-checked">Checking…</p>
+          <p class="last-checked" id="temp2-outage"></p>
+      </div>
+    </a>
 
   </div>
 </main>
@@ -367,23 +449,39 @@
 <script>
 async function fetchAll() {
   try {
-    const [kwRes, fabRes, igRes, kioRes] = await Promise.all([
+    const [kwRes, fabRes, igRes, kioRes, tempRes, temp2Res] = await Promise.all([
       fetch("/api/status"),
       fetch("/api/fabitrack/status"),
       fetch("/api/infogenesis/status"),
       fetch("/api/kiosks/status"),
+      fetch("/api/temp/status"),
+      fetch("/api/temp2/status"),
     ]);
     const kw  = await kwRes.json();
     const fab = await fabRes.json();
     const ig  = await igRes.json();
     const kio = await kioRes.json();
+    const temp = await tempRes.json();
+    const temp2 = await temp2Res.json();
     updateCard(kw,  "kw");
     updateCard(fab, "fab");
     updateCard(ig,  "ig");
-    updateCard(kio, "kio")
+    updateCard(kio, "kio");
+    updateCard(temp, "temp");
+    updateCard(temp2, "temp2");
   } catch(e) {
     console.error("Failed to fetch status:", e);
   }
+}
+
+function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+
+    if (hours > 0) {
+        return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`
 }
 
 function updateCard(data, prefix) {
@@ -394,6 +492,19 @@ function updateCard(data, prefix) {
   const checked = devs.every(d => d.status !== "pending");
   const pct     = checked ? Math.round(online / total * 100) : 0;
   const offPct  = total > 0 ? offline / total : 0;
+  const offlineDevices = devs.filter(
+      d => d.status === "offline" && d.offline_since
+  );
+
+  let oldestOutage = null;
+
+  offlineDevices.forEach(device => {
+      const outageStart = new Date(device.offline_since);
+
+      if (!oldestOutage || outageStart < oldestOutage) {
+        oldestOutage = outageStart;
+      }
+    });
 
   document.getElementById(prefix + "-online").textContent  = checked ? online  : "—";
   document.getElementById(prefix + "-offline").textContent = checked ? offline : "—";
@@ -401,6 +512,18 @@ function updateCard(data, prefix) {
   document.getElementById(prefix + "-bar").style.width     = pct + "%";
   document.getElementById(prefix + "-checked").textContent =
     data.last_checked ? "Last checked: " + data.last_checked : "Checking…";
+
+  const outageEl = document.getElementById(prefix + "-outage");
+
+  if (offlineDevices.length > 0 && oldestOutage) {
+      const seconds =
+          (Date.now() - oldestOutage.getTime()) / 1000;
+
+      outageEl.textContent = `Longest outage: ${formatDuration(seconds)}`;
+  }
+  else {
+      outageEl.textContent = "";
+}
 
   const card = document.getElementById("card-" + prefix);
   if (card) {
