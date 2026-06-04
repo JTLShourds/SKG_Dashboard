@@ -11,10 +11,10 @@ app = Flask(__name__)
 
 # ─── Keywatcher devices ───────────────────────────────────────────────────
 KEYWATCHER_DEVICES = [
-    {"name": "400",    "ip": "10.10.52.5", "cabinet": {"name": "Cabinet", "ip": "10.10.52.6"}},
-    {"name": "GWP",    "ip": "10.20.3.2", "cabinet": {"name": "Cabinet", "ip": "10.20.3.3"}},
-    {"name": "KTN",    "ip": "192.168.75.99", "cabinet": {"name": "Cabinet", "ip": "192.168.75.152"}},
-    {"name": "BA",     "ip": "10.3.3.2", "cabinet": {"name": "Cabinet", "ip": "10.3.3.94"}},
+    {"name": "400",    "ip": "10.10.52.5", "cabinet": {"name": "400 Cabinet", "ip": "10.10.52.6"}},
+    {"name": "GWP",    "ip": "10.20.3.2", "cabinet": {"name": "GWP Cabinet", "ip": "10.20.3.3"}},
+    {"name": "KTN",    "ip": "192.168.75.99", "cabinet": {"name": "KTN Cabinet", "ip": "192.168.75.152"}},
+    {"name": "BA",     "ip": "10.3.3.2", "cabinet": {"name": "BA Cabinet", "ip": "10.3.3.94"}},
 ]
 # ─── Fabitrack devices ────────────────────────────────────────────────────────
 FABITRACK_DEVICES = [
@@ -120,6 +120,8 @@ def update_device_status(device, success):
     if device["consecutive"] >= OFFLINE_CONSECUTIVE:
         device["online"] = False
         device["status"] = "offline"
+        #with open("offline_log.txt", "a") as logfile:
+            #logfile.write(f"{datetime.now():%Y-%m-%d %H:%M:%S} | {device['name']} - {device['ip']} is offline\n\n")
     elif recent_failures > WARNING_THRESHOLD:
         device["online"] = True  # reachable right now but unstable
         device["status"] = "warning"
