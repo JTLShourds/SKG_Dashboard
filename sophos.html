@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Temp Page — Network Monitor</title>
+<title>Sophos Firewalls — Network Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -242,7 +242,7 @@
 </head>
 <body>
 
-<div class="banner">Temp Page</div>
+<div class="banner">Sophos Firewalls</div>
 
 <header>
   <div>
@@ -287,7 +287,7 @@
 
 <div class="devices" id="device-grid"></div>
 
-<footer>TEMP PAGE &nbsp;·&nbsp; LOCALHOST:5000</footer>
+<footer>SOPHOS PAGE &nbsp;·&nbsp; LOCALHOST:5000</footer>
 
 <script>
 const ICONS = {
@@ -338,7 +338,7 @@ function render(data) {
 
 async function fetchStatus() {
   try {
-    const res  = await fetch("/api/temp/status");
+    const res  = await fetch("/api/sophos/status");
     const data = await res.json();
     render(data);
   } catch(e) {
@@ -351,12 +351,12 @@ async function triggerRefresh() {
   btn.disabled = true;
   btn.classList.add("spinning");
   try {
-    await fetch("/api/temp/refresh", { method: "POST" });
+    await fetch("/api/sophos/refresh", { method: "POST" });
     await new Promise(r => setTimeout(r, 800));
     let attempts = 0;
     const poll = setInterval(async () => {
       attempts++;
-      const res  = await fetch("/api/temp/status");
+      const res  = await fetch("/api/sophos/status");
       const data = await res.json();
       render(data);
       if (!data.checking || attempts > 20) {
